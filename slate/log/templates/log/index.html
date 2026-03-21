@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>slate.</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --ink:#1A1A18;--paper:#FAFAF7;--warm:#F2F0EB;
+  --rule:#E5E3DC;--muted:#9E9B93;--accent:#C17B4E;
+}
+html,body{min-height:100%;background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;max-width:480px;margin:0 auto}
+.screen{display:flex;flex-direction:column;min-height:100vh}
+#s-app{background:var(--paper)}
+header{padding:22px 24px 18px;display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--rule)}
+.wm{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
+.wm span{color:var(--accent)}
+.hd-right{display:flex;align-items:center;gap:10px}
+.month-lbl{font-size:11px;font-weight:400;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.input-area{padding:24px 24px 20px;border-bottom:1px solid var(--rule)}
+.input-hint{font-size:12px;color:var(--muted);font-weight:400;margin-bottom:14px}
+.amt-line{display:flex;align-items:baseline;gap:4px;padding-bottom:10px;border-bottom:1.5px solid var(--ink);margin-bottom:14px}
+.amt-sym{font-family:'Lora',serif;font-size:22px;font-weight:400;font-style:italic;color:var(--muted)}
+.amt-f{font-family:'Lora',serif;font-size:46px;font-weight:400;color:var(--ink);border:none;outline:none;background:transparent;width:100%;line-height:1;letter-spacing:-.02em;-moz-appearance:textfield}
+.amt-f::placeholder{color:var(--rule)}
+.amt-f::-webkit-inner-spin-button,.amt-f::-webkit-outer-spin-button{-webkit-appearance:none}
+.note-f{width:100%;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:300;color:var(--ink);background:transparent;padding:0 0 14px;border-bottom:1px solid var(--rule);margin-bottom:18px}
+.note-f::placeholder{color:var(--muted)}
+.save-row{display:flex;justify-content:flex-end}
+.save-btn{background:var(--ink);color:var(--paper);border:none;border-radius:6px;padding:10px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;letter-spacing:.03em;transition:opacity .15s;-webkit-appearance:none}
+.save-btn:active{opacity:.7}
+.today-row{display:flex;align-items:center;justify-content:space-between;background:var(--warm);border-radius:8px;padding:14px 16px;cursor:pointer}
+.today-amt{font-family:'Lora',serif;font-size:28px;font-weight:600;color:var(--ink);line-height:1}
+.today-sym{font-family:'Lora',serif;font-size:16px;font-weight:400;font-style:italic;color:var(--muted);margin-right:2px}
+.today-note{font-size:13px;font-weight:300;color:var(--muted);margin-top:4px}
+.today-edit{font-size:12px;color:var(--muted);border:1px solid var(--rule);border-radius:4px;padding:4px 10px}
+.log{padding:0 24px 80px}
+.log-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--rule)}
+.log-date{flex-shrink:0;width:36px;text-align:right}
+.log-d{font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--ink);line-height:1}
+.log-wd{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:1px}
+.log-rule{width:1px;height:22px;background:var(--rule);flex-shrink:0}
+.log-entries{flex:1;min-width:0}
+.entry-line{display:flex;align-items:center;justify-content:space-between;padding:2px 0}
+.entry-line+.entry-line{border-top:1px solid var(--rule);margin-top:6px;padding-top:8px}
+.log-content{flex:1;min-width:0}
+.log-note{font-size:14px;font-weight:300;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-owner{font-size:10px;font-weight:500;letter-spacing:.05em;margin-top:3px;text-transform:uppercase}
+.log-amt{font-family:'Lora',serif;font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;padding-left:10px}
+.log-empty{padding:20px 0;font-size:13px;font-weight:300;color:var(--muted);text-align:center}
+.total-row{display:flex;justify-content:space-between;align-items:baseline;padding:18px 0 0}
+.total-lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400}
+.total-val{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--ink)}
+</style>
+</head>
+<body>
+
+<!-- APP -->
+<div class="screen active" id="s-app">
+  <header>
+    <span class="wm">slate<span>.</span></span>
+    <div class="hd-right">
+      <span class="month-lbl" id="monthLbl">{% if month_label %}{{ month_label }}{% endif %}</span>
+    </div>
+  </header>
+  <div class="input-area" id="inputArea"></div>
+  <div class="log" id="log"></div>
+</div>
+
+<script>
+var memberName='{{ member_name|default:"" }}';
+var memberColour='{{ member_colour|default:"" }}';
+var editing=false;
+var todayEntry=null;
+
+function getCsrf(){return document.cookie.split(';').map(function(c){return c.trim()}).filter(function(c){return c.startsWith('csrftoken=')})[0]?.split('=')[1]||''}
+
+function fmt(n){return'\u00A3'+Math.round(parseFloat(n)).toLocaleString('en-GB')}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function renderInput(){
+  var el=document.getElementById('inputArea');
+  if(todayEntry&&!editing){
+    el.innerHTML='<div class="today-row" onclick="startEdit()">'
+      +'<div><div><span class="today-sym">\u00A3</span><span class="today-amt">'+Math.round(parseFloat(todayEntry.amount)).toLocaleString('en-GB')+'</span></div>'
+      +'<div class="today-note">'+esc(todayEntry.note)+'</div></div>'
+      +'<span class="today-edit">Edit</span></div>';
+  } else {
+    el.innerHTML='<div class="input-hint">How much did you spend today, roughly?</div>'
+      +'<div class="amt-line"><span class="amt-sym">\u00A3</span><input class="amt-f" id="amt" type="number" min="0" placeholder="0" inputmode="decimal" value="'+(todayEntry&&editing?todayEntry.amount:'')+'" /></div>'
+      +'<input class="note-f" id="note" type="text" placeholder="weekly shop, plumber, dinner out" maxlength="80" value="'+(todayEntry&&editing?esc(todayEntry.note):'')+'" />'
+      +'<div class="save-row"><button class="save-btn" onclick="saveEntry()">'+(editing?'Update':'Save')+'</button></div>';
+    document.getElementById('amt').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('note').focus()});
+    document.getElementById('note').addEventListener('keydown',function(e){if(e.key==='Enter')saveEntry()});
+    if(!todayEntry)setTimeout(function(){var a=document.getElementById('amt');if(a)a.focus()},50);
+  }
+}
+
+function renderLog(data){
+  var el=document.getElementById('log');
+  var wds=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var today=new Date().toISOString().slice(0,10);
+
+  todayEntry=null;
+  data.entries.forEach(function(group){
+    if(group.date===today){
+      group.items.forEach(function(item){
+        if(item.member_name===memberName) todayEntry=item;
+      });
+    }
+  });
+
+  var pastGroups=data.entries.filter(function(g){return g.date!==today});
+
+  var html=pastGroups.length
+    ? pastGroups.map(function(g){
+        var entriesHtml=g.items.map(function(e){
+          return '<div class="entry-line">'
+            +'<div class="log-content">'
+              +'<div class="log-note">'+esc(e.note)+'</div>'
+              +'<div class="log-owner" style="color:'+e.member_colour+'">'+esc(e.member_name)+'</div>'
+            +'</div>'
+            +'<div class="log-amt">'+fmt(e.amount)+'</div>'
+          +'</div>';
+        }).join('');
+        return '<div class="log-row">'
+          +'<div class="log-date"><div class="log-d">'+g.day+'</div><div class="log-wd">'+wds[new Date(g.date+'T12:00:00').getDay()]+'</div></div>'
+          +'<div class="log-rule"></div>'
+          +'<div class="log-entries">'+entriesHtml+'</div>'
+          +'</div>';
+      }).join('')
+    : '<div class="log-empty">Previous days will appear here.</div>';
+
+  if(data.entries.length){
+    html+='<div class="total-row"><span class="total-lbl">Month total</span><span class="total-val">'+fmt(data.total)+'</span></div>';
+  }
+  el.innerHTML=html;
+  renderInput();
+}
+
+async function loadLog(){
+  var now=new Date();
+  document.getElementById('monthLbl').textContent=now.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  var r=await fetch('/log/entries/'+now.getFullYear()+'/'+(now.getMonth()+1)+'/');
+  if(r.status===403){window.location.href='/';return}
+  var d=await r.json();
+  memberName=d.member_name||memberName;
+  memberColour=d.member_colour||memberColour;
+  renderLog(d);
+}
+
+function startEdit(){editing=true;renderInput();setTimeout(function(){var a=document.getElementById('amt');if(a)a.focus()},50)}
+
+async function saveEntry(){
+  var a=parseFloat(document.getElementById('amt').value);
+  var n=document.getElementById('note').value.trim();
+  if(!a||a<=0||!n)return;
+  await fetch('/log/entry/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({amount:a,note:n})});
+  editing=false;
+  loadLog();
+}
+
+{% if logged_in %}
+loadLog();
+{% endif %}
+</script>
+</body>
+</html>

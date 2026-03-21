@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>slate. — spending, roughly</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1A1A18;
+  --paper:#FAFAF7;
+  --warm:#F2F0EB;
+  --warmer:#EAE6DE;
+  --rule:#E5E3DC;
+  --muted:#9E9B93;
+  --accent:#C17B4E;
+  --accent-lt:#E8C9B0;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);
+  font-family:'DM Sans',sans-serif;
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+nav{
+  position:fixed;top:0;left:0;right:0;
+  padding:20px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  z-index:100;
+  background:transparent;
+  transition:background .3s;
+}
+nav.scrolled{background:rgba(250,250,247,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule)}
+.nav-wm{
+  font-family:'Lora',serif;
+  font-size:20px;font-weight:600;color:var(--ink);
+  letter-spacing:-.02em;text-decoration:none;
+}
+.nav-wm span{color:var(--accent)}
+.nav-cta{
+  font-size:13px;font-weight:500;color:var(--ink);
+  text-decoration:none;letter-spacing:.02em;
+  border-bottom:1px solid var(--ink);
+  padding-bottom:1px;
+  transition:opacity .2s;
+}
+.nav-cta:hover{opacity:.5}
+
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  justify-content:center;
+  padding:120px 40px 80px;
+  max-width:900px;margin:0 auto;
+  position:relative;
+}
+.hero-tag{
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:2.5rem;
+  opacity:0;animation:up .6s .1s ease forwards;
+}
+.hero-wm{
+  font-family:'Lora',serif;
+  font-size:clamp(64px,10vw,120px);
+  font-weight:600;color:var(--ink);
+  letter-spacing:-.03em;line-height:.95;
+  margin-bottom:3rem;
+  opacity:0;animation:up .7s .2s ease forwards;
+}
+.hero-wm-dot{color:var(--accent)}
+.hero-strapline{
+  max-width:580px;
+  opacity:0;animation:up .7s .35s ease forwards;
+}
+.strapline-main{
+  font-family:'Lora',serif;
+  font-size:clamp(18px,2.5vw,26px);
+  font-weight:400;line-height:1.5;
+  color:var(--ink);margin-bottom:1.25rem;
+}
+.strapline-main em{
+  font-style:italic;color:var(--accent);
+}
+.strapline-sub{
+  font-size:15px;font-weight:300;
+  color:var(--muted);line-height:1.7;
+  white-space:nowrap;
+}
+@media(max-width:720px){
+  .strapline-sub{white-space:normal}
+}
+.hero-actions{
+  display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;
+  margin-top:3.5rem;
+  opacity:0;animation:up .7s .5s ease forwards;
+}
+.btn-primary{
+  background:var(--ink);color:var(--paper);
+  border:none;border-radius:8px;
+  padding:14px 28px;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;letter-spacing:.02em;
+  cursor:pointer;text-decoration:none;
+  transition:opacity .2s;display:inline-block;
+}
+.btn-primary:hover{opacity:.8}
+.btn-outline{
+  background:transparent;color:var(--ink);
+  border:1px solid var(--rule);border-radius:8px;
+  padding:14px 28px;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:400;letter-spacing:.02em;
+  cursor:pointer;text-decoration:none;
+  transition:opacity .2s;display:inline-block;
+}
+.btn-outline:hover{opacity:.7}
+.btn-ghost{
+  font-size:13px;font-weight:400;color:var(--muted);
+  text-decoration:none;letter-spacing:.02em;
+  transition:color .2s;
+  border:none;background:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+}
+.btn-ghost:hover{color:var(--ink)}
+
+.how-section{
+  padding:100px 40px;
+  max-width:900px;margin:0 auto;
+}
+.section-label{
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:3rem;
+}
+.how-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:2.5rem 2rem;border-top:1px solid var(--rule);
+  padding-top:2rem;
+}
+.how-item{
+  padding:0;
+}
+.how-num{
+  font-family:'Lora',serif;
+  font-size:11px;font-weight:400;font-style:italic;
+  color:var(--accent);margin-bottom:1rem;
+}
+.how-title{
+  font-size:15px;font-weight:500;color:var(--ink);
+  margin-bottom:.75rem;line-height:1.35;
+}
+.how-body{
+  font-size:13px;font-weight:300;color:var(--muted);
+  line-height:1.7;
+}
+
+.truth-section{
+  padding:80px 40px;
+  border-top:1px solid var(--rule);
+}
+.truth-inner{max-width:900px;margin:0 auto}
+.truth-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:60px;align-items:start;
+}
+.truth-label{
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:1.5rem;
+}
+.truth-statement{
+  font-family:'Lora',serif;
+  font-size:clamp(16px,2vw,22px);
+  font-weight:400;line-height:1.6;color:var(--ink);
+}
+.truth-statement em{font-style:italic;color:var(--accent)}
+.truth-aside{
+  padding-top:.5rem;
+}
+.truth-aside p{
+  font-size:14px;font-weight:300;color:var(--muted);
+  line-height:1.75;margin-bottom:1rem;
+}
+
+.cta-section{
+  background:var(--ink);
+  padding:100px 40px;
+  text-align:center;
+}
+.cta-wm{
+  font-family:'Lora',serif;
+  font-size:clamp(48px,8vw,96px);
+  font-weight:600;color:var(--paper);
+  letter-spacing:-.03em;line-height:.95;
+  margin-bottom:2rem;
+}
+.cta-wm-dot{color:var(--accent)}
+.cta-line{
+  font-size:16px;font-weight:300;
+  color:rgba(250,250,247,.5);
+  margin-bottom:3rem;line-height:1.6;
+}
+.cta-line strong{color:rgba(250,250,247,.85);font-weight:400}
+.btn-paper{
+  background:var(--paper);color:var(--ink);
+  border:none;border-radius:8px;
+  padding:16px 36px;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;letter-spacing:.02em;
+  cursor:pointer;text-decoration:none;
+  transition:opacity .2s;display:inline-block;
+}
+.btn-paper:hover{opacity:.85}
+.cta-actions{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px 16px}
+
+footer{
+  padding:28px 40px;
+  border-top:1px solid var(--rule);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.foot-wm{
+  font-family:'Lora',serif;font-size:16px;font-weight:600;
+  color:var(--ink);text-decoration:none;
+}
+.foot-wm span{color:var(--accent)}
+.foot-note{font-size:12px;color:var(--muted);font-weight:300}
+
+@keyframes up{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Create / join overlay (matches app styling) */
+#flow-overlay{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:var(--paper);overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+#flow-overlay.open{display:block}
+.flow-inner{max-width:480px;margin:0 auto;min-height:100%;position:relative}
+.flow-screen{display:none;flex-direction:column;min-height:100vh;justify-content:center;padding:0 24px}
+.flow-screen.active{display:flex}
+.code-back{font-size:13px;color:var(--muted);cursor:pointer;padding:24px 0 32px;display:flex;align-items:center;gap:6px;border:none;background:none;font-family:'DM Sans',sans-serif;width:100%;text-align:left}
+.code-back:active{opacity:.5}
+.code-wm{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--ink);margin-bottom:28px}
+.code-wm span{color:var(--accent)}
+.code-label{font-size:12px;color:var(--muted);letter-spacing:.05em;margin-bottom:8px}
+.code-input{width:100%;border:none;outline:none;font-family:'Lora',serif;font-size:32px;font-weight:600;color:var(--ink);background:transparent;padding:0 0 10px;border-bottom:1.5px solid var(--ink);margin-bottom:8px;letter-spacing:.06em;-webkit-appearance:none}
+.code-input::placeholder{color:var(--rule);font-weight:400;font-style:italic;font-size:26px}
+.code-hint{font-size:12px;font-weight:300;color:var(--muted);line-height:1.5;margin-bottom:28px}
+.code-err{font-size:13px;color:var(--accent);margin-top:-20px;margin-bottom:20px;display:none}
+.code-err.on{display:block}
+.code-btn{width:100%;background:var(--ink);color:var(--paper);border:none;border-radius:8px;padding:15px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;letter-spacing:.02em;transition:opacity .15s;-webkit-appearance:none}
+.code-btn:active{opacity:.7}
+.share-display{font-family:'Lora',serif;font-size:42px;font-weight:600;color:var(--ink);letter-spacing:.1em;background:var(--warm);border-radius:10px;padding:22px;text-align:center;margin-bottom:12px}
+.share-hint{font-size:13px;font-weight:300;color:var(--muted);line-height:1.65;text-align:center;margin-bottom:32px}
+.share-hint strong{color:var(--ink);font-weight:400}
+
+@media(max-width:680px){
+  nav{padding:18px 24px}
+  .hero{padding:100px 24px 60px}
+  .how-section{padding:60px 24px}
+  .how-grid{grid-template-columns:1fr;gap:0;border-top:none;padding-top:0}
+  .how-item{border-bottom:1px solid var(--rule);padding:1.5rem 0}
+  .how-item:first-child{padding-top:0}
+  .how-item:last-child{border-bottom:none}
+  .truth-section{padding:60px 24px}
+  .truth-grid{grid-template-columns:1fr;gap:32px}
+  .cta-section{padding:80px 24px}
+  footer{padding:24px;flex-direction:column;gap:8px;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a class="nav-wm" href="#">slate<span>.</span></a>
+  <a class="nav-cta" href="#start">Get started</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-tag">Spending, roughly</div>
+  <div class="hero-wm">slate<span class="hero-wm-dot">.</span></div>
+  <div class="hero-strapline">
+    <p class="strapline-main">You don't need to manage your money.<br>You just need to <em>stop wondering where it went.</em></p>
+    <p class="strapline-sub">15 seconds a day. One number, one note. At month end, the mystery dissolves.</p>
+  </div>
+  <div class="hero-actions">
+    <button type="button" class="btn-primary" onclick="openFlow('s-create')">Start your log</button>
+    <button type="button" class="btn-outline" onclick="openFlow('s-join')">Join a log</button>
+    <a class="btn-ghost" href="#how">How it works</a>
+  </div>
+</section>
+
+<section class="how-section" id="how">
+  <div class="section-label">How it works</div>
+  <div class="how-grid">
+    <div class="how-item">
+      <div class="how-num">one</div>
+      <div class="how-title">Log today in 15 seconds</div>
+      <div class="how-body">One number. One note. How much did you spend today, roughly? That's it.</div>
+    </div>
+    <div class="how-item">
+      <div class="how-num">two</div>
+      <div class="how-title">Watch the month build</div>
+      <div class="how-body">Each day adds a line. By the 20th you have a diary of your spending.</div>
+    </div>
+    <div class="how-item">
+      <div class="how-num">three</div>
+      <div class="how-title">The bill makes sense</div>
+      <div class="how-body">Statement arrives. You scroll back. Vancouver flights. The plumber. A good week in July. The mystery is gone.</div>
+    </div>
+  </div>
+</section>
+
+<section class="truth-section">
+  <div class="truth-inner">
+    <div class="truth-grid">
+      <div>
+        <div class="truth-label">The insight</div>
+        <p class="truth-statement">The problem with your bank statement is not the numbers. It's that the numbers have <em>no narrative.</em> Forty transactions that tell you nothing about the month you actually lived.</p>
+      </div>
+      <div class="truth-aside">
+        <p>Most finance apps make this worse. They give you more numbers, better charts, deeper categorisation. They add precision to a problem that was never about precision.</p>
+        <p>Slate gives you one line per day. Not a transaction, a memory. Enough to reconstruct the month, not enough to make you anxious about it.</p>
+        <p>Free for three months. Then £2 a month, which includes sharing with a partner. Less than a coffee. Less than the cost of not knowing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section" id="start">
+  <div class="cta-wm">slate<span class="cta-wm-dot">.</span></div>
+  <p class="cta-line">15 seconds a day.<br><strong>No more wondering where your money went.</strong></p>
+  <div class="cta-actions">
+    <button type="button" class="btn-paper" onclick="openFlow('s-create')">Start your log</button>
+    <button type="button" class="btn-paper" style="background:transparent;color:var(--paper);border:1px solid rgba(250,250,247,.35)" onclick="openFlow('s-join')">Join a log</button>
+  </div>
+</section>
+
+<footer>
+  <a class="foot-wm" href="#">slate<span>.</span></a>
+  <span class="foot-note">Free for 3 months · No bank connections · No categories</span>
+</footer>
+
+<div id="flow-overlay" aria-hidden="true">
+  <div class="flow-inner">
+    <div class="flow-screen" id="s-create">
+      <button type="button" class="code-back" onclick="closeFlow()">← Back</button>
+      <div class="code-wm">slate<span>.</span></div>
+      <div class="code-label">Choose a code</div>
+      <input class="code-input" id="create-code" type="text" maxlength="20" placeholder="e.g. tomkat" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      <div class="code-label" style="margin-top:20px">Your name</div>
+      <input class="code-input" id="create-name" type="text" maxlength="40" placeholder="e.g. Tom" autocomplete="off" />
+      <p class="code-hint">Share the code with anyone you want to log with.</p>
+      <div class="code-err" id="create-err"></div>
+      <button type="button" class="code-btn" onclick="createCode()">Create log →</button>
+    </div>
+    <div class="flow-screen" id="s-share">
+      <div class="code-wm">slate<span>.</span></div>
+      <div class="code-label">Your code</div>
+      <div class="share-display" id="share-display"></div>
+      <p class="share-hint">Share this with your partner.<br>They tap <strong>Join a log</strong> and enter it.</p>
+      <button type="button" class="code-btn" onclick="goToLog()">Start logging →</button>
+    </div>
+    <div class="flow-screen" id="s-join">
+      <button type="button" class="code-back" onclick="closeFlow()">← Back</button>
+      <div class="code-wm">slate<span>.</span></div>
+      <div class="code-label">Enter the code</div>
+      <input class="code-input" id="join-code" type="text" maxlength="20" placeholder="e.g. tomkat" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      <div class="code-label" style="margin-top:20px">Your name</div>
+      <input class="code-input" id="join-name" type="text" maxlength="40" placeholder="e.g. Kat" autocomplete="off" />
+      <p class="code-hint">The code whoever set up the log shared with you.</p>
+      <div class="code-err" id="join-err"></div>
+      <button type="button" class="code-btn" onclick="joinCode()">Join log →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var nav=document.getElementById('nav');
+window.addEventListener('scroll',function(){
+  nav.classList.toggle('scrolled',window.scrollY>40);
+});
+
+function getCsrf(){
+  var c=document.cookie.split(';').map(function(x){return x.trim()}).filter(function(x){return x.indexOf('csrftoken=')===0})[0];
+  return c?c.split('=')[1]:'';
+}
+
+function showFlowScreen(id){
+  document.querySelectorAll('.flow-screen').forEach(function(s){s.classList.remove('active')});
+  var el=document.getElementById(id);
+  if(el)el.classList.add('active');
+}
+
+function openFlow(screenId){
+  var o=document.getElementById('flow-overlay');
+  o.classList.add('open');
+  o.setAttribute('aria-hidden','false');
+  showFlowScreen(screenId);
+  document.body.style.overflow='hidden';
+  window.scrollTo(0,0);
+  o.scrollTop=0;
+}
+
+function closeFlow(){
+  var o=document.getElementById('flow-overlay');
+  o.classList.remove('open');
+  o.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+  document.querySelectorAll('.flow-screen').forEach(function(s){s.classList.remove('active')});
+  document.querySelectorAll('.code-err').forEach(function(e){e.classList.remove('on')});
+}
+
+function goToLog(){
+  window.location.href='/log/';
+}
+
+async function createCode(){
+  var code=document.getElementById('create-code').value.trim().toLowerCase();
+  var name=document.getElementById('create-name').value.trim();
+  var err=document.getElementById('create-err');
+  if(!code||!name){err.textContent='Please fill in both fields';err.classList.add('on');return}
+  var r=await fetch('/create/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({code:code,name:name})});
+  var d=await r.json();
+  if(d.error){err.textContent=d.error;err.classList.add('on');return}
+  err.classList.remove('on');
+  document.getElementById('share-display').textContent=code.toUpperCase();
+  showFlowScreen('s-share');
+}
+
+async function joinCode(){
+  var code=document.getElementById('join-code').value.trim().toLowerCase();
+  var name=document.getElementById('join-name').value.trim();
+  var err=document.getElementById('join-err');
+  if(!code||!name){err.textContent='Please fill in both fields';err.classList.add('on');return}
+  var r=await fetch('/join/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({code:code,name:name})});
+  var d=await r.json();
+  if(d.error){err.textContent=d.error;err.classList.add('on');return}
+  err.classList.remove('on');
+  goToLog();
+}
+</script>
+</body>
+</html>

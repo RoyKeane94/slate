@@ -26,6 +26,9 @@ for _env in (BASE_DIR.parent / '.env', BASE_DIR / '.env'):
         load_dotenv(_env)
         break
 
+# Railway injects these at runtime (build may not have them).
+IS_RAILWAY = bool(os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RAILWAY_PROJECT_ID'))
+
 
 def _env_bool(key: str, default: bool = False) -> bool:
     val = os.getenv(key)
@@ -59,6 +62,12 @@ if _railway_domain:
     _railway_origin = f'https://{_railway_domain}'
     if _railway_origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(_railway_origin)
+
+# Liveness probes hit the container over HTTP with Host localhost / 127.0.0.1.
+if IS_RAILWAY:
+    for _h in ('127.0.0.1', 'localhost'):
+        if _h not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(_h)
 
 if not DEBUG:
     if not ALLOWED_HOSTS:
@@ -209,7 +218,14 @@ WHITENOISE_USE_FINDERS = DEBUG
 # ── Production (HTTPS, cookies, HSTS) — Railway / reverse proxies ──
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = _env_bool('SECURE_SSL_REDIRECT', default=True)
+    if IS_RAILWAY:
+        USE_X_FORWARDED_HOST = True
+    # Railway healthchecks call HTTP on the container without X-Forwarded-Proto;
+    # a default redirect to HTTPS makes the probe fail (503 / unhealthy).
+    SECURE_SSL_REDIRECT = _env_bool(
+        'SECURE_SSL_REDIRECT',
+        default=False if IS_RAILWAY else True,
+    )
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True

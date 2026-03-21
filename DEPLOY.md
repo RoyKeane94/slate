@@ -23,6 +23,8 @@ Railway also sets **`RAILWAY_PUBLIC_DOMAIN`**; the app adds it to **`ALLOWED_HOS
    - **Start**: Gunicorn on **`$PORT`**
 6. **Health check**: `GET /health/` → `200` + body `ok`.
 
+**If health checks fail with “service unavailable”**: Railway probes use **HTTP** on the container. This project sets **`SECURE_SSL_REDIRECT`** to **`False` by default on Railway** so those probes are not redirected to HTTPS (TLS is still terminated at Railway’s edge). To force redirects anyway, set **`SECURE_SSL_REDIRECT=true`** only if your platform’s probes follow redirects or use HTTPS internally.
+
 ### Custom domain
 
 Add the domain in Railway, then set:

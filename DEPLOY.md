@@ -23,7 +23,9 @@ Railway also sets **`RAILWAY_PUBLIC_DOMAIN`**; the app adds it to **`ALLOWED_HOS
    - **Start**: Gunicorn on **`$PORT`**
 6. **Health check**: `GET /health/` → `200` + body `ok`.
 
-**If health checks fail with “service unavailable”**: Railway probes use **HTTP** on the container. This project sets **`SECURE_SSL_REDIRECT`** to **`False` by default on Railway** so those probes are not redirected to HTTPS (TLS is still terminated at Railway’s edge). To force redirects anyway, set **`SECURE_SSL_REDIRECT=true`** only if your platform’s probes follow redirects or use HTTPS internally.
+**If health checks fail with “service unavailable”**: Probes use **HTTP** on the container without `X-Forwarded-Proto`. **`SECURE_SSL_REDIRECT`** defaults to **`False`** whenever **`DJANGO_DEBUG=False`** so probes are not redirected (TLS is still at Railway’s edge). Opt in with **`SECURE_SSL_REDIRECT=true`** only if your probes follow redirects.
+
+**Database tables missing (`relation "log_household" does not exist`)**: Run migrations against the same database your app uses — locally: `cd slate && python manage.py migrate`. On Railway, **`startCommand`** runs **`migrate`** before Gunicorn so a fresh Postgres gets tables even if the release phase did not run.
 
 ### Custom domain
 

@@ -26,10 +26,6 @@ for _env in (BASE_DIR.parent / '.env', BASE_DIR / '.env'):
         load_dotenv(_env)
         break
 
-# Railway injects these at runtime (build may not have them).
-IS_RAILWAY = bool(os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('RAILWAY_PROJECT_ID'))
-
-
 def _env_bool(key: str, default: bool = False) -> bool:
     val = os.getenv(key)
     if val is None:
@@ -63,8 +59,8 @@ if _railway_domain:
     if _railway_origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(_railway_origin)
 
-# Liveness probes hit the container over HTTP with Host localhost / 127.0.0.1.
-if IS_RAILWAY:
+if not DEBUG:
+    # Load balancers / PaaS probes use these Host values over HTTP on the container.
     for _h in ('127.0.0.1', 'localhost'):
         if _h not in ALLOWED_HOSTS:
             ALLOWED_HOSTS.append(_h)
@@ -218,14 +214,14 @@ WHITENOISE_USE_FINDERS = DEBUG
 # ── Production (HTTPS, cookies, HSTS) — Railway / reverse proxies ──
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    if IS_RAILWAY:
-        USE_X_FORWARDED_HOST = True
-    # Railway healthchecks call HTTP on the container without X-Forwarded-Proto;
-    # a default redirect to HTTPS makes the probe fail (503 / unhealthy).
-    SECURE_SSL_REDIRECT = _env_bool(
-        'SECURE_SSL_REDIRECT',
-        default=False if IS_RAILWAY else True,
+    # Trust X-Forwarded-Host when using a remote DB (typical PaaS); override with USE_X_FORWARDED_HOST=false.
+    USE_X_FORWARDED_HOST = _env_bool(
+        'USE_X_FORWARDED_HOST',
+        default=bool(_database_url or _db_host),
     )
+    # Internal health checks use HTTP without X-Forwarded-Proto; redirect → probe fails (503).
+    # TLS is still terminated at the edge. Set SECURE_SSL_REDIRECT=true only if you know probes follow HTTPS.
+    SECURE_SSL_REDIRECT = _env_bool('SECURE_SSL_REDIRECT', default=False)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True

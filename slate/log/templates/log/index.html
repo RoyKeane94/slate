@@ -89,7 +89,7 @@ function renderInput(){
       +'<div class="today-note">'+esc(todayEntry.note)+'</div></div>'
       +'<span class="today-edit">Edit</span></div>';
   } else {
-    el.innerHTML='<div class="input-hint">How much did you spend today, roughly?</div>'
+    el.innerHTML='<div class="input-hint">How much did you spend today, roughly? Enter <strong>0</strong> for a no-spend day.</div>'
       +'<div class="amt-line"><span class="amt-sym">\u00A3</span><input class="amt-f" id="amt" type="number" min="0" placeholder="0" inputmode="decimal" value="'+(todayEntry&&editing?todayEntry.amount:'')+'" /></div>'
       +'<input class="note-f" id="note" type="text" placeholder="weekly shop, plumber, dinner out" maxlength="80" value="'+(todayEntry&&editing?esc(todayEntry.note):'')+'" />'
       +'<div class="save-row"><button class="save-btn" onclick="saveEntry()">'+(editing?'Update':'Save')+'</button></div>';
@@ -155,9 +155,11 @@ async function loadLog(){
 function startEdit(){editing=true;renderInput();setTimeout(function(){var a=document.getElementById('amt');if(a)a.focus()},50)}
 
 async function saveEntry(){
-  var a=parseFloat(document.getElementById('amt').value);
+  var raw=document.getElementById('amt').value.trim();
+  var a=raw===''?0:parseFloat(raw);
   var n=document.getElementById('note').value.trim();
-  if(!a||a<=0||!n)return;
+  if(isNaN(a)||a<0)return;
+  if(a>0&&!n)return;
   await fetch('/log/entry/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({amount:a,note:n})});
   editing=false;
   loadLog();

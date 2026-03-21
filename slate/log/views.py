@@ -106,14 +106,19 @@ def save_entry(request):
         return JsonResponse({'error': 'Not logged in'}, status=403)
 
     data = json.loads(request.body)
+    raw_amount = data.get('amount', 0)
     try:
-        amount = Decimal(str(data.get('amount', '')))
+        amount = Decimal(str(raw_amount))
     except (InvalidOperation, TypeError):
+        return JsonResponse({'error': 'Invalid amount'})
+    if amount < 0:
         return JsonResponse({'error': 'Invalid amount'})
 
     note = data.get('note', '').strip()
-    if not note or amount <= 0:
-        return JsonResponse({'error': 'Amount and note required'})
+    if amount > 0 and not note:
+        return JsonResponse({'error': 'Add a short note for what you spent'})
+    if amount == 0 and not note:
+        note = 'No spend'
 
     today = date.today()
     entry, _ = Entry.objects.update_or_create(

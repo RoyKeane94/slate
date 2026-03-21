@@ -10,5 +10,4 @@ buildCommand = "cd slate && DJANGO_SETTINGS_MODULE=slate.settings python manage.
 # Railway Postgres is not your laptop DB — migrate runs against the linked DATABASE_URL on each deploy.
 releaseCommand = "cd slate && python manage.py migrate --noinput"
 startCommand = "cd slate && gunicorn slate.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
-healthcheckPath = "/health/"
-healthcheckTimeout = 60
+

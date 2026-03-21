@@ -21,9 +21,7 @@ Railway also sets **`RAILWAY_PUBLIC_DOMAIN`**; the app adds it to **`ALLOWED_HOS
    - **Build**: `pip install` + `collectstatic`
    - **Release**: `migrate`
    - **Start**: Gunicorn on **`$PORT`**
-6. **Health check**: `GET /health/` → `200` + body `ok`.
-
-**If health checks fail with “service unavailable”**: Probes use **HTTP** on the container without `X-Forwarded-Proto`. **`SECURE_SSL_REDIRECT`** defaults to **`False`** whenever **`DJANGO_DEBUG=False`** so probes are not redirected (TLS is still at Railway’s edge). Opt in with **`SECURE_SSL_REDIRECT=true`** only if your probes follow redirects.
+6. **Healthcheck** (optional in `railway.toml`): Railway probes **`/health/`** with **`Host: healthcheck.railway.app`**. That host is always in **`ALLOWED_HOSTS`** in settings. Remove `healthcheckPath` / `healthcheckTimeout` from `railway.toml` if you don’t want Railway to wait for HTTP 200 before switching traffic.
 
 **Database tables missing on Railway** (`relation "log_household" does not exist`): Your **local** `migrate` only updates your **local** DB. Railway’s Postgres is separate; **`releaseCommand`** in `railway.toml` runs **`migrate`** there on deploy. If you disabled release in the UI, re-enable it or run **`railway run python manage.py migrate`** from `slate/` once.
 

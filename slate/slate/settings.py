@@ -59,8 +59,12 @@ if _railway_domain:
     if _railway_origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(_railway_origin)
 
+# Railway HTTP deploy healthchecks use this Host (even if DJANGO_DEBUG is wrongly left True).
+# https://docs.railway.com/deploy/healthchecks#healthcheck-hostname
+if 'healthcheck.railway.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('healthcheck.railway.app')
+
 if not DEBUG:
-    # Load balancers / PaaS probes use these Host values over HTTP on the container.
     for _h in ('127.0.0.1', 'localhost'):
         if _h not in ALLOWED_HOSTS:
             ALLOWED_HOSTS.append(_h)

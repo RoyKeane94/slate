@@ -73,8 +73,11 @@ def join_household(request):
     except Household.DoesNotExist:
         return JsonResponse({'error': 'Code not found'})
 
-    colour = household.next_colour()
-    member = Member.objects.create(household=household, name=name, colour=colour)
+    # Same code + same name = resume that member (session expired / new device), not a second account.
+    member = Member.objects.filter(household=household, name__iexact=name).first()
+    if member is None:
+        colour = household.next_colour()
+        member = Member.objects.create(household=household, name=name, colour=colour)
 
     request.session['household_id'] = household.id
     request.session['member_id'] = member.id

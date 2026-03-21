@@ -25,7 +25,7 @@ Railway also sets **`RAILWAY_PUBLIC_DOMAIN`**; the app adds it to **`ALLOWED_HOS
 
 **If health checks fail with “service unavailable”**: Probes use **HTTP** on the container without `X-Forwarded-Proto`. **`SECURE_SSL_REDIRECT`** defaults to **`False`** whenever **`DJANGO_DEBUG=False`** so probes are not redirected (TLS is still at Railway’s edge). Opt in with **`SECURE_SSL_REDIRECT=true`** only if your probes follow redirects.
 
-**Database tables missing (`relation "log_household" does not exist`)**: Run migrations against the same database your app uses — locally: `cd slate && python manage.py migrate`. On Railway, **`startCommand`** runs **`migrate`** before Gunicorn so a fresh Postgres gets tables even if the release phase did not run.
+**Database tables missing on Railway** (`relation "log_household" does not exist`): Your **local** `migrate` only updates your **local** DB. Railway’s Postgres is separate; **`releaseCommand`** in `railway.toml` runs **`migrate`** there on deploy. If you disabled release in the UI, re-enable it or run **`railway run python manage.py migrate`** from `slate/` once.
 
 ### Custom domain
 

@@ -8,6 +8,11 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 
 from .auth_helper import member_from_token_header
+from .household_code import (
+    generate_unique_household_code,
+    is_valid_household_code,
+    normalize_household_code,
+)
 from .models import Household, Member
 from .services import entries_payload_for_month, save_today_entry
 
@@ -60,12 +65,31 @@ def landing(request):
 @require_POST
 def create_household(request):
     data = json.loads(request.body)
-    code = data.get('code', '').strip().lower()
     name = data.get('name', '').strip()
-    if not code or not name:
-        return JsonResponse({'error': 'Please fill in both fields'}, status=400)
-    if Household.objects.filter(code=code).exists():
-        return JsonResponse({'error': 'code already taken'}, status=400)
+    code_raw = data.get('code', '')
+    code_raw = code_raw if isinstance(code_raw, str) else ''
+    code_raw = normalize_household_code(code_raw)
+
+    if not name:
+        return JsonResponse({'error': 'Please add your name'}, status=400)
+
+    if not code_raw:
+        try:
+            code = generate_unique_household_code(model=Household)
+        except RuntimeError:
+            return JsonResponse({'error': 'Could not create a code. Try again.'}, status=500)
+    else:
+        if not is_valid_household_code(code_raw):
+            return JsonResponse(
+                {'error': 'Invalid code — use the 6-character code shown, or leave it blank.'},
+                status=400,
+            )
+        code = code_raw
+        if Household.objects.filter(code=code).exists():
+            return JsonResponse(
+                {'error': 'That code is already taken. Tap Regenerate or try again.'},
+                status=400,
+            )
 
     household = Household.objects.create(code=code)
     colour = household.next_colour()

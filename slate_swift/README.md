@@ -31,8 +31,10 @@ The Xcode project lives under **`Slate/slate/`**. The app target uses a **folder
 1. Open **`Slate/slate/slate.xcodeproj`**.
 2. Set **`SLATE_API_BASE_URL`** in `.env` and run **`python3 scripts/sync_ios_config.py`** (see above).
 3. **Signing & Capabilities** → select your team.
-4. **Info** → add **Privacy – User Notifications Usage Description** (`NSUserNotificationsUsageDescription`):  
-   `Slate can remind you once a day to log what you spent.`
+4. **Privacy & App Store**
+   - **`PrivacyInfo.xcprivacy`** lives in `slate/` (folder-synced into the app bundle). It declares **no tracking**, **no collected data types**, and **UserDefaults** access with reason **CA92.1** (pending share code / local prefs).
+   - **`NSUserNotificationsUsageDescription`** is set via build settings (`INFOPLIST_KEY_NSUserNotificationsUsageDescription`) on the **slate** target (Debug + Release).
+   - **`ITSAppUsesNonExemptEncryption`** is set to **NO** for standard HTTPS-only traffic (adjust in Xcode if you add custom crypto).
 5. Build & run (iOS **17+**).
 
 ## Backend
@@ -46,6 +48,7 @@ python manage.py migrate
 The app calls:
 
 - `POST /create/`, `POST /join/` — JSON; responses include `token`, `member_name`, `member_colour`.
+- **Create:** send `name` and a **6-character** `code` (letters `a–z` except `i`, `l`, `o`, plus digits `2–9` — same alphabet in the app, web, and `slate/log/household_code.py`). Or omit `code` and the server will generate one.
 - `POST /log/entry/` — `Authorization: Token …`
 - `GET /log/entries/{year}/{month}/` — same header.
 

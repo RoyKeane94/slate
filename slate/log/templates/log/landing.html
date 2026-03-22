@@ -251,6 +251,13 @@ footer{
 .code-input{width:100%;border:none;outline:none;font-family:'Lora',serif;font-size:32px;font-weight:600;color:var(--ink);background:transparent;padding:0 0 10px;border-bottom:1.5px solid var(--ink);margin-bottom:8px;letter-spacing:.06em;-webkit-appearance:none}
 .code-input::placeholder{color:var(--rule);font-weight:400;font-style:italic;font-size:26px}
 .code-hint{font-size:12px;font-weight:300;color:var(--muted);line-height:1.5;margin-bottom:28px}
+.code-readonly-wrap{margin-bottom:4px}
+.code-display{min-height:48px;display:flex;align-items:flex-end;cursor:default;user-select:all}
+.code-row-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;margin-bottom:18px}
+.code-row-actions button{font-size:14px;font-family:'DM Sans',sans-serif;border:none;background:none;cursor:pointer;padding:0;letter-spacing:.02em;-webkit-appearance:none}
+.code-row-actions .btn-copy{font-weight:500;color:var(--ink)}
+.code-row-actions .btn-regen{font-weight:400;color:var(--ink)}
+.code-row-actions .btn-regen:disabled{color:var(--muted);cursor:default;opacity:.55}
 .code-err{font-size:13px;color:var(--accent);margin-top:-20px;margin-bottom:20px;display:none}
 .code-err.on{display:block}
 .code-btn{width:100%;background:var(--ink);color:var(--paper);border:none;border-radius:8px;padding:15px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;letter-spacing:.02em;transition:opacity .15s;-webkit-appearance:none}
@@ -351,11 +358,17 @@ footer{
     <div class="flow-screen" id="s-create">
       <button type="button" class="code-back" onclick="closeFlow()">← Back</button>
       <div class="code-wm">slate<span>.</span></div>
-      <div class="code-label">Choose a code</div>
-      <input class="code-input" id="create-code" type="text" maxlength="20" placeholder="e.g. tomkat" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-      <div class="code-label" style="margin-top:20px">Your name</div>
+      <div class="code-label">Your log code</div>
+      <div class="code-readonly-wrap">
+        <div class="code-input code-display" id="create-code-display" aria-live="polite"></div>
+      </div>
+      <div class="code-row-actions">
+        <button type="button" class="btn-copy" id="create-copy-btn" onclick="copyCreateCode()">Copy</button>
+        <button type="button" class="btn-regen" id="create-regen-btn" onclick="regenCreateCode()">Regenerate</button>
+      </div>
+      <div class="code-label" style="margin-top:8px">Your name</div>
       <input class="code-input" id="create-name" type="text" maxlength="40" placeholder="e.g. Tom" autocomplete="off" />
-      <p class="code-hint">Share the code with anyone you want to log with.</p>
+      <p class="code-hint">We generate a short code for you. Share it so others can join your log. You can change it once with Regenerate.</p>
       <div class="code-err" id="create-err"></div>
       <button type="button" class="code-btn" onclick="createCode()">Create log →</button>
     </div>
@@ -370,7 +383,7 @@ footer{
       <button type="button" class="code-back" onclick="closeFlow()">← Back</button>
       <div class="code-wm">slate<span>.</span></div>
       <div class="code-label">Enter the code</div>
-      <input class="code-input" id="join-code" type="text" maxlength="20" placeholder="e.g. tomkat" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+      <input class="code-input" id="join-code" type="text" maxlength="40" placeholder="6-character code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
       <div class="code-label" style="margin-top:20px">Your name</div>
       <input class="code-input" id="join-name" type="text" maxlength="40" placeholder="e.g. Kat" autocomplete="off" />
       <p class="code-hint">The code whoever set up the log shared with you.</p>
@@ -381,6 +394,52 @@ footer{
 </div>
 
 <script>
+/* Must match slate/log/household_code.py — HOUSEHOLD_CODE_ALPHABET */
+var HOUSEHOLD_CODE_ALPHABET='abcdefghjkmnpqrtuvwxyz23456789';
+var createFlow={code:'',regenUsed:false};
+
+function generateHouseholdCode(){
+  var a=HOUSEHOLD_CODE_ALPHABET;
+  var s='';
+  var buf=new Uint8Array(6);
+  crypto.getRandomValues(buf);
+  for(var i=0;i<6;i++) s+=a[buf[i]%a.length];
+  return s;
+}
+
+function initCreateScreen(){
+  createFlow.regenUsed=false;
+  createFlow.code=generateHouseholdCode();
+  var el=document.getElementById('create-code-display');
+  if(el) el.textContent=createFlow.code.toUpperCase();
+  var rb=document.getElementById('create-regen-btn');
+  if(rb) rb.disabled=false;
+  var cb=document.getElementById('create-copy-btn');
+  if(cb) cb.textContent='Copy';
+}
+
+function copyCreateCode(){
+  var t=createFlow.code.toUpperCase();
+  var btn=document.getElementById('create-copy-btn');
+  function flash(){
+    if(btn) btn.textContent='Copied';
+    setTimeout(function(){ if(btn) btn.textContent='Copy'; },1200);
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(flash).catch(function(){});
+  }
+}
+
+function regenCreateCode(){
+  if(createFlow.regenUsed) return;
+  createFlow.regenUsed=true;
+  createFlow.code=generateHouseholdCode();
+  var el=document.getElementById('create-code-display');
+  if(el) el.textContent=createFlow.code.toUpperCase();
+  var rb=document.getElementById('create-regen-btn');
+  if(rb) rb.disabled=true;
+}
+
 var nav=document.getElementById('nav');
 window.addEventListener('scroll',function(){
   nav.classList.toggle('scrolled',window.scrollY>40);
@@ -402,6 +461,7 @@ function openFlow(screenId){
   o.classList.add('open');
   o.setAttribute('aria-hidden','false');
   showFlowScreen(screenId);
+  if(screenId==='s-create') initCreateScreen();
   document.body.style.overflow='hidden';
   window.scrollTo(0,0);
   o.scrollTop=0;
@@ -421,15 +481,17 @@ function goToLog(){
 }
 
 async function createCode(){
-  var code=document.getElementById('create-code').value.trim().toLowerCase();
+  var code=createFlow.code;
   var name=document.getElementById('create-name').value.trim();
   var err=document.getElementById('create-err');
-  if(!code||!name){err.textContent='Please fill in both fields';err.classList.add('on');return}
+  if(!name){err.textContent='Please add your name';err.classList.add('on');return}
+  if(!code){err.textContent='Something went wrong—go back and try again';err.classList.add('on');return}
   var r=await fetch('/create/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({code:code,name:name})});
   var d=await r.json();
   if(d.error){err.textContent=d.error;err.classList.add('on');return}
   err.classList.remove('on');
-  document.getElementById('share-display').textContent=code.toUpperCase();
+  var shown=(d.code||code).toString();
+  document.getElementById('share-display').textContent=shown.toUpperCase();
   showFlowScreen('s-share');
 }
 

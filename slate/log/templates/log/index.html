@@ -16,11 +16,11 @@ html,body{min-height:100%;background:var(--paper);font-family:'DM Sans',sans-ser
 .screen{display:flex;flex-direction:column;min-height:100vh}
 #s-app{background:var(--paper)}
 header{padding:22px 24px 18px;display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--rule);gap:12px}
-.hd-left{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
-.nav-home{font-size:12px;font-weight:500;color:var(--muted);text-decoration:none;letter-spacing:.02em}
-.nav-home:active{opacity:.6}
+.hd-left{display:flex;align-items:baseline;flex-wrap:wrap}
 .wm{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
 .wm span{color:var(--accent)}
+.wm-link{text-decoration:none;color:inherit;display:inline}
+.wm-link:active{opacity:.85}
 .hd-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .month-lbl{font-size:11px;font-weight:400;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 .input-area{padding:24px 24px 20px;border-bottom:1px solid var(--rule)}
@@ -67,8 +67,7 @@ header{padding:22px 24px 18px;display:flex;align-items:baseline;justify-content:
 <div class="screen active" id="s-app">
   <header>
     <div class="hd-left">
-      <a href="{% url 'leave_log' %}" class="nav-home">Home</a>
-      <span class="wm">slate<span>.</span></span>
+      <a href="{% url 'leave_log' %}" class="wm wm-link" aria-label="Home">slate<span>.</span></a>
     </div>
     <div class="hd-right">
       <span class="month-lbl" id="monthLbl">{% if month_label %}{{ month_label }}{% endif %}</span>

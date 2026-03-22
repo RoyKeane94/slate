@@ -116,6 +116,13 @@ def join_household(request):
 
 
 @require_GET
+def leave_log(request):
+    """End browser session and return to the landing page."""
+    request.session.flush()
+    return redirect('/')
+
+
+@require_GET
 @ensure_csrf_cookie
 def log_view(request):
     if not _session_ok(request):

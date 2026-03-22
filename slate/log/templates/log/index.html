@@ -15,10 +15,13 @@
 html,body{min-height:100%;background:var(--paper);font-family:'DM Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;max-width:480px;margin:0 auto}
 .screen{display:flex;flex-direction:column;min-height:100vh}
 #s-app{background:var(--paper)}
-header{padding:22px 24px 18px;display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--rule)}
+header{padding:22px 24px 18px;display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--rule);gap:12px}
+.hd-left{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.nav-home{font-size:12px;font-weight:500;color:var(--muted);text-decoration:none;letter-spacing:.02em}
+.nav-home:active{opacity:.6}
 .wm{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
 .wm span{color:var(--accent)}
-.hd-right{display:flex;align-items:center;gap:10px}
+.hd-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .month-lbl{font-size:11px;font-weight:400;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 .input-area{padding:24px 24px 20px;border-bottom:1px solid var(--rule)}
 .input-hint{font-size:12px;color:var(--muted);font-weight:400;margin-bottom:14px}
@@ -29,7 +32,9 @@ header{padding:22px 24px 18px;display:flex;align-items:baseline;justify-content:
 .amt-f::-webkit-inner-spin-button,.amt-f::-webkit-outer-spin-button{-webkit-appearance:none}
 .note-f{width:100%;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:300;color:var(--ink);background:transparent;padding:0 0 14px;border-bottom:1px solid var(--rule);margin-bottom:18px}
 .note-f::placeholder{color:var(--muted)}
-.save-row{display:flex;justify-content:flex-end}
+.save-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.cancel-btn{background:transparent;color:var(--muted);border:1px solid var(--rule);border-radius:6px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;letter-spacing:.03em;-webkit-appearance:none}
+.cancel-btn:active{opacity:.7}
 .save-btn{background:var(--ink);color:var(--paper);border:none;border-radius:6px;padding:10px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;letter-spacing:.03em;transition:opacity .15s;-webkit-appearance:none}
 .save-btn:active{opacity:.7}
 .today-row{display:flex;align-items:center;justify-content:space-between;background:var(--warm);border-radius:8px;padding:14px 16px;cursor:pointer}
@@ -61,7 +66,10 @@ header{padding:22px 24px 18px;display:flex;align-items:baseline;justify-content:
 <!-- APP -->
 <div class="screen active" id="s-app">
   <header>
-    <span class="wm">slate<span>.</span></span>
+    <div class="hd-left">
+      <a href="{% url 'leave_log' %}" class="nav-home">Home</a>
+      <span class="wm">slate<span>.</span></span>
+    </div>
     <div class="hd-right">
       <span class="month-lbl" id="monthLbl">{% if month_label %}{{ month_label }}{% endif %}</span>
     </div>
@@ -92,7 +100,7 @@ function renderInput(){
     el.innerHTML='<div class="input-hint">How much did you spend today, roughly?</div>'
       +'<div class="amt-line"><span class="amt-sym">\u00A3</span><input class="amt-f" id="amt" type="number" min="0" placeholder="0" inputmode="decimal" value="'+(todayEntry&&editing?todayEntry.amount:'')+'" /></div>'
       +'<input class="note-f" id="note" type="text" placeholder="weekly shop, plumber, dinner out" maxlength="80" value="'+(todayEntry&&editing?esc(todayEntry.note):'')+'" />'
-      +'<div class="save-row"><button class="save-btn" onclick="saveEntry()">'+(editing?'Update':'Save')+'</button></div>';
+      +'<div class="save-row"><button type="button" class="cancel-btn" onclick="cancelEntry()">Cancel</button><button type="button" class="save-btn" onclick="saveEntry()">'+(editing?'Update':'Save')+'</button></div>';
     document.getElementById('amt').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('note').focus()});
     document.getElementById('note').addEventListener('keydown',function(e){if(e.key==='Enter')saveEntry()});
     if(!todayEntry)setTimeout(function(){var a=document.getElementById('amt');if(a)a.focus()},50);
@@ -153,6 +161,11 @@ async function loadLog(){
 }
 
 function startEdit(){editing=true;renderInput();setTimeout(function(){var a=document.getElementById('amt');if(a)a.focus()},50)}
+
+function cancelEntry(){
+  editing=false;
+  loadLog();
+}
 
 async function saveEntry(){
   var raw=document.getElementById('amt').value.trim();

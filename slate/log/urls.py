@@ -9,6 +9,7 @@ from . import views
 urlpatterns = [
     path('health/', views.health),
     path('favicon.svg', views.favicon),
+    path('leave/', views.leave_log, name='leave_log'),
     path('', views.landing),
     path('app/', RedirectView.as_view(url='/', permanent=False)),
     path('create/', csrf_exempt(views.create_household)),

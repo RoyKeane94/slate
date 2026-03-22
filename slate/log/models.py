@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 
 
@@ -23,6 +25,7 @@ class Member(models.Model):
     household = models.ForeignKey(Household, on_delete=models.CASCADE, related_name='members')
     name = models.CharField(max_length=40)
     colour = models.CharField(max_length=7)
+    api_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

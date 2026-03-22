@@ -1,7 +1,5 @@
 import json
-from collections import OrderedDict
 from datetime import date
-from decimal import Decimal, InvalidOperation
 
 from django.contrib.staticfiles import finders
 from django.http import Http404, HttpResponse, JsonResponse
@@ -9,11 +7,31 @@ from django.shortcuts import render, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Household, Member, Entry
+from .auth_helper import member_from_token_header
+from .models import Household, Member
+from .services import entries_payload_for_month, save_today_entry
 
 
 def _session_ok(request):
     return request.session.get('household_id') and request.session.get('member_id')
+
+
+def _resolve_auth(request):
+    """
+    Returns (household_id, member_id, member_name, member_colour) or None.
+    Web: session. iOS: Authorization: Token <member.api_token>.
+    """
+    if _session_ok(request):
+        return (
+            request.session['household_id'],
+            request.session['member_id'],
+            request.session.get('member_name', ''),
+            request.session.get('member_colour', ''),
+        )
+    m = member_from_token_header(request)
+    if m is None:
+        return None
+    return (m.household_id, m.id, m.name, m.colour)
 
 
 @require_GET
@@ -45,9 +63,9 @@ def create_household(request):
     code = data.get('code', '').strip().lower()
     name = data.get('name', '').strip()
     if not code or not name:
-        return JsonResponse({'error': 'Please fill in both fields'})
+        return JsonResponse({'error': 'Please fill in both fields'}, status=400)
     if Household.objects.filter(code=code).exists():
-        return JsonResponse({'error': 'Code already taken'})
+        return JsonResponse({'error': 'code already taken'}, status=400)
 
     household = Household.objects.create(code=code)
     colour = household.next_colour()
@@ -57,7 +75,13 @@ def create_household(request):
     request.session['member_id'] = member.id
     request.session['member_name'] = member.name
     request.session['member_colour'] = member.colour
-    return JsonResponse({'success': True, 'code': code})
+    return JsonResponse({
+        'success': True,
+        'code': code,
+        'token': str(member.api_token),
+        'member_name': member.name,
+        'member_colour': member.colour,
+    })
 
 
 @require_POST
@@ -66,14 +90,13 @@ def join_household(request):
     code = data.get('code', '').strip().lower()
     name = data.get('name', '').strip()
     if not code or not name:
-        return JsonResponse({'error': 'Please fill in both fields'})
+        return JsonResponse({'error': 'Please fill in both fields'}, status=400)
 
     try:
         household = Household.objects.get(code=code)
     except Household.DoesNotExist:
-        return JsonResponse({'error': 'Code not found'})
+        return JsonResponse({'error': 'code not found'}, status=400)
 
-    # Same code + same name = resume that member (session expired / new device), not a second account.
     member = Member.objects.filter(household=household, name__iexact=name).first()
     if member is None:
         colour = household.next_colour()
@@ -83,7 +106,13 @@ def join_household(request):
     request.session['member_id'] = member.id
     request.session['member_name'] = member.name
     request.session['member_colour'] = member.colour
-    return JsonResponse({'success': True})
+    return JsonResponse({
+        'success': True,
+        'household_code': household.code,
+        'token': str(member.api_token),
+        'member_name': member.name,
+        'member_colour': member.colour,
+    })
 
 
 @require_GET
@@ -102,82 +131,32 @@ def log_view(request):
 
 @require_POST
 def save_entry(request):
-    if not _session_ok(request):
+    auth = _resolve_auth(request)
+    if auth is None:
         return JsonResponse({'error': 'Not logged in'}, status=403)
+    household_id, member_id, _, _ = auth
 
-    data = json.loads(request.body)
-    raw_amount = data.get('amount', 0)
     try:
-        amount = Decimal(str(raw_amount))
-    except (InvalidOperation, TypeError):
-        return JsonResponse({'error': 'Invalid amount'})
-    if amount < 0:
-        return JsonResponse({'error': 'Invalid amount'})
-
-    note = data.get('note', '').strip()
-    if amount > 0 and not note:
-        return JsonResponse({'error': 'Add a short note for what you spent'})
-    if amount == 0 and not note:
-        note = 'No spend'
-
-    today = date.today()
-    entry, _ = Entry.objects.update_or_create(
-        household_id=request.session['household_id'],
-        member_id=request.session['member_id'],
-        date=today,
-        defaults={'amount': amount, 'note': note},
-    )
-    return JsonResponse({
-        'success': True,
-        'entry': {
-            'amount': str(entry.amount),
-            'note': entry.note,
-            'date': str(entry.date),
-        },
-    })
-
-
-WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        data = json.loads(request.body)
+        payload = save_today_entry(household_id, member_id, data)
+        return JsonResponse(payload)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 
 @require_GET
 def entries_for_month(request, year, month):
-    if not _session_ok(request):
+    auth = _resolve_auth(request)
+    if auth is None:
         return JsonResponse({'error': 'Not logged in'}, status=403)
+    household_id, _, member_name, member_colour = auth
 
-    household_id = request.session['household_id']
-    qs = (
-        Entry.objects
-        .filter(household_id=household_id, date__year=year, date__month=month)
-        .select_related('member')
-        .order_by('-date', 'member__name')
+    payload = entries_payload_for_month(
+        household_id, year, month,
+        member_name=member_name,
+        member_colour=member_colour,
     )
-
-    grouped = OrderedDict()
-    total = Decimal('0.00')
-    for e in qs:
-        key = str(e.date)
-        if key not in grouped:
-            grouped[key] = {
-                'date': key,
-                'day': e.date.day,
-                'weekday': WEEKDAYS[e.date.weekday()],
-                'items': [],
-            }
-        grouped[key]['items'].append({
-            'note': e.note,
-            'amount': str(e.amount),
-            'member_name': e.member.name,
-            'member_colour': e.member.colour,
-        })
-        total += e.amount
-
-    return JsonResponse({
-        'entries': list(grouped.values()),
-        'total': str(total),
-        'member_name': request.session.get('member_name', ''),
-        'member_colour': request.session.get('member_colour', ''),
-    })
+    return JsonResponse(payload)
 
 
 def error_404(request, exception):

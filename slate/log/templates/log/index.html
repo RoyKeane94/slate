@@ -89,7 +89,7 @@ function renderInput(){
       +'<div class="today-note">'+esc(todayEntry.note)+'</div></div>'
       +'<span class="today-edit">Edit</span></div>';
   } else {
-    el.innerHTML='<div class="input-hint">How much did you spend today, roughly? Enter <strong>0</strong> for a no-spend day.</div>'
+    el.innerHTML='<div class="input-hint">How much did you spend today, roughly?</div>'
       +'<div class="amt-line"><span class="amt-sym">\u00A3</span><input class="amt-f" id="amt" type="number" min="0" placeholder="0" inputmode="decimal" value="'+(todayEntry&&editing?todayEntry.amount:'')+'" /></div>'
       +'<input class="note-f" id="note" type="text" placeholder="weekly shop, plumber, dinner out" maxlength="80" value="'+(todayEntry&&editing?esc(todayEntry.note):'')+'" />'
       +'<div class="save-row"><button class="save-btn" onclick="saveEntry()">'+(editing?'Update':'Save')+'</button></div>';
